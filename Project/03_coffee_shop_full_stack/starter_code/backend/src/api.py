@@ -83,9 +83,15 @@ def create_drink(jwt):
     try:
         body = request.get_json()
 
-        new_drink = Drink()
-        new_drink.title = body.get("title", None)
-        new_drink.recipe = json.dumps(body.get("recipe", None))
+        new_title = body.get("title", None)
+        new_recipe = body.get("recipe", None)
+        if new_title is None or new_recipe is None:
+            abort(400)
+
+        new_drink = Drink(
+            title = new_title,
+            recipe = json.dumps(new_recipe)
+        )
 
         new_drink.insert()
 
@@ -119,6 +125,19 @@ def update_drink(jwt, id):
 
         if qDrink is None:
             abort(404)
+
+        body = request.get_json()
+
+        update_title = body.get("title", None)
+        update_recipe = body.get("recipe", None)
+        if update_title is None and update_recipe is None:
+            abort(400)
+        elif update_title is not None:
+            qDrink.title = update_title
+        elif update_recipe is not None:
+            qDrink.recipe = json.dumps(update_recipe)
+
+        qDrink.recipe = json.dumps(update_recipe)
 
         drink = [qDrink.long()]
 
@@ -176,6 +195,16 @@ def unprocessable(error):
             "message": "unprocessable"
         }
     ), 422
+
+@app.errorhandler(400)
+def bad_request(error):
+    return jsonify(
+        {
+            "success": False,
+            "error": 400,
+            "message": "bad request"
+        }
+    ), 400
 
 @app.errorhandler(404)
 def not_found(error):
